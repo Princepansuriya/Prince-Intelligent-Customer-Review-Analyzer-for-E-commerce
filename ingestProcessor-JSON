@@ -1,0 +1,10 @@
+{
+  "Records": [
+    {
+      "s3": {
+        "bucket": { "name": "ak-customer-datareview" },
+        "object": { "key": "Womens Clothing E-Commerce Reviews.csv" }
+      }
+    }
+  ]
+}
