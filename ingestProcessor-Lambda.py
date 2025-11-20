@@ -7,11 +7,14 @@ from decimal import Decimal
 s3 = boto3.client('s3')
 comprehend = boto3.client('comprehend')
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('ReviewAnalysis')
+
+# ✅ Correct DynamoDB table name
+table = dynamodb.Table('Prince-raw')
 
 def lambda_handler(event, context):
     print("Lambda triggered with event:", json.dumps(event))
-    
+
+    # Extract bucket and key from S3 event
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = event['Records'][0]['s3']['object']['key']
     print(f"Processing file: {key} from bucket: {bucket}")
@@ -24,17 +27,20 @@ def lambda_handler(event, context):
 
     count = 0
     for row in reader:
-        review_text = row.get('Review Text', '').strip()
+
+        # Correct headers based on your CSV
+        review_text = row.get('ReviewText', '').strip()
+        product_category = row.get('ProductCategory', 'Unknown')
+
         if not review_text:
             print("⚠️ Skipping empty review row:", row)
             continue
 
         try:
-            # Sentiment Analysis
+            # Call AWS Comprehend
             sentiment = comprehend.detect_sentiment(Text=review_text, LanguageCode='en')
             key_phrases = comprehend.detect_key_phrases(Text=review_text, LanguageCode='en')
 
-            # Convert float -> Decimal for DynamoDB
             sentiment_score_decimal = {
                 k: Decimal(str(v)) for k, v in sentiment['SentimentScore'].items()
             }
@@ -47,10 +53,10 @@ def lambda_handler(event, context):
                 'DetectedSentiment': sentiment['Sentiment'],
                 'SentimentScore': sentiment_score_decimal,
                 'KeyPhrases': [p['Text'] for p in key_phrases['KeyPhrases']],
-                'ProductCategory': row.get('Department Name', 'Unknown')
+                'ProductCategory': product_category
             }
 
-            # Save item
+            # Save to DynamoDB (Prince-raw)
             table.put_item(Item=item)
             count += 1
             print(f"✅ Saved ReviewID {item['ReviewID']} successfully")
