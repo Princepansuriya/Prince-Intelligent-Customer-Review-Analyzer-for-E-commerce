@@ -16,6 +16,7 @@ Interactive Dashboard Visualization
 The final output is a QuickSight Dashboard showing insights such as sentiment distribution, ratings trend, product category analysis, and customer review summary.
 
 🏗 Architecture
+![alt text](<Screenshot 2025-11-20 094205.png>)
 Amazon S3 (input CSV)
         ↓
 AWS Lambda (ETL + Comprehend)
